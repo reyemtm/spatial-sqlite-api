@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spatialite Query</title>
+  <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/Halfmoon/1.1.1/css/halfmoon.min.css'
+    integrity='sha512-Kaju/JzlErKhC47smofkXAdSkvILovmvh2nnok6rgN79oB3Co/T7Pm7Ns8dcpNEN3VTVZDw2ilrUDByzInEabg=='
+    crossorigin='anonymous' />
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Major+Mono+Display" rel="stylesheet">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      font-family: monospace;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+
+    main {
+      flex: 1;
+    }
+
+    h1 {
+      font-family: 'Major Mono Display', monospace;
+      font-weight: 100;
+      letter-spacing: 4px;
+    }
+
+    header {
+      margin: 1.5rem;
+      text-align: center;
+    }
+
+    @media screen and (max-width: 768px) {
+      header {
+        margin: 0.5rem 1rem;
+      }
+    }
+
+    .container {
+      width: 1000px;
+      max-width: calc(100% - 40px);
+      margin: 0 auto;
+    }
+
+    .alert {
+      padding: 0.8rem;
+    }
+
+    footer {
+      padding: 1rem 0;
+    }
+
+    .center {
+      text-align: center;
+    }
+
+    html {
+      font-size: 75%;
+    }
+
+    li {
+      list-style: none;
+      margin: 0.6rem 0
+    }
+
+    .loading {
+      color: transparent !important;
+      min-height: .8rem;
+      pointer-events: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+      height: 100vh;
+      width: 100%;
+      pointer-events: none;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.8)
+    }
+
+    .loading::after {
+      animation: loading .5s infinite linear;
+      background: 0 0;
+      border: .1rem solid #ffcf00;
+      border-radius: 50%;
+      border-right-color: transparent;
+      border-top-color: transparent;
+      content: "";
+      display: block;
+      height: .8rem;
+      left: 50%;
+      margin-left: -.4rem;
+      margin-top: -.4rem;
+      opacity: 1;
+      padding: 0;
+      position: absolute;
+      top: 50%;
+      width: .8rem;
+      z-index: 1
+    }
+
+    .loading.loading-lg {
+      min-height: 2rem
+    }
+
+    .loading.loading-lg::after {
+      height: 4rem;
+      margin-left: -2rem;
+      margin-top: -2rem;
+      width: 4rem;
+    }
+
+    @keyframes loading {
+      0% {
+        transform: rotate(0)
+      }
+
+      100% {
+        transform: rotate(360deg)
+      }
+    }
+  </style>
+</head>
+
+<body class="dark-mode">
+  <div id="loader" class="loading-lg"></div>
+  <header>
+    <h1>Spatialite Query</h1>
+    <p class="font-weight-light font-size-12 text-muted">Data Sources: <a
+        href="https://www.usgs.gov/u.s.-board-on-geographic-names/download-gnis-data">USGS</a>
+      <a
+        href="https://public.opendatasoft.com/explore/dataset/geonames-all-cities-with-a-population-1000/export/?disjunctive.cou_name_en&sort=name">opendatasoft</a>
+      <a href="https://sdgis-sandag.opendata.arcgis.com/" class="href">San Diego Open Data</a>
+    </p>
+  </header>
+  <main class="container">
+    <div class="container-sm center">
+      <p>Query ~ 320k World Cities, ordered by distance from your browser location.</p>
+      <input id="places" type="text" class="form-control my-10" placeholder="Place Name"></input>
+    </div>
+    <div class="container-sm">
+      <div class="alert alert-primary d-none"></div>
+      <ul>
+      </ul>
+    </div>
+    <div class="container-sm center">
+      <p>Query ~ 800k parcels, sorted by distance to the San Diego Zoo.</p>
+      <form class="form-inline">
+        <input id="parcels" type="text" class="form-control my-10"
+          placeholder="Parcel Address (2100 Park BLVD)"></input><button type="button" class="btn" id="use_index">Use FTS
+          Index</button>
+      </form>
+    </div>
+    <div class="container-sm">
+      <div class="alert alert-primary d-none"></div>
+      <ul>
+      </ul>
+    </div>
+    <div class="container-sm center">
+      <p>Show me closest parcel the San Diego Zoo.</p>
+      <form action="" class="form-inline" style="justify-content: center;">
+        <button type="button" class="btn btn-primary" id="nearest">Spatial Only Query: Closest</button><button
+          type="reset" class="btn btn-secondary" data-reset="">Clear</button>
+      </form>
+      <p></p>
+    </div>
+    <div class="container-sm">
+      <div class="alert alert-primary d-none"></div>
+      <ul>
+      </ul>
+    </div>
+    <div class="container-sm center">
+      <p>Show all the parcels within 1/4 km of Sunset Cliffs.</p>
+      <form class="form-inline" style="justify-content: center;">
+        <button type="button" class="btn btn-primary" id="within">Spatial Only Query: Within</button><button
+          type="reset" class="btn btn-secondary" data-reset="">Clear</button>
+      </form>
+      <p></p>
+    </div>
+    <div class="container-sm">
+      <div class="alert alert-primary d-none"></div>
+      <ul>
+      </ul>
+    </div>
+  </main>
+  <footer class="bg-dark">
+    <div class="container">
+      <div class="container-sm font-weight-light font-size-12 text-muted center bg-dark">
+        a project by <a href="https://getbounds/com">getBounds | Malcolm Meyer</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+
+    const coords = [-82, 39]
+    let isTyping = 0;
+    let x = 0;
+
+    function getLocation() {
+      if (navigator.geolocation) {
+        return navigator.geolocation.getCurrentPosition(showPosition, null, {
+          enableHighAccuracy: true,
+          timeout: 1000,
+          maximumAge: 0
+        });
+      } else {
+        console.log("Geolocation is not supported by this browser.")
+      }
+    }
+
+    function showPosition(position) {
+      coords[0] = position.coords.latitude;
+      coords[1] = position.coords.longitude
+    }
+
+    getLocation();
+
+    let timeout = null;
+    const inputs = document.querySelectorAll("input");
+    const inputA = inputs[0];
+    const results = document.querySelectorAll("ul");
+    const resultA = results[0]
+    const messages = document.querySelectorAll(".alert");
+    const message = messages[0]
+    inputs[0].focus()
+
+    inputs[0].addEventListener("input", async (e) => {
+      e.preventDefault()
+      getLocation();
+      results[0].classList.remove("d-none")
+
+      const query = e.target.value;
+      if (!query.length) {
+        resultA.innerHTML = ""
+        message.classList.add("d-none")
+      }
+      if (query.length > 2) {
+        clearTimeout(timeout);
+
+        timeout = setTimeout(async () => {
+          const res = await fetch(`http://localhost:5000/places?lat=${coords[1]}1&lng=${coords[0]}&q=` + query);
+          const rawData = await res.json();
+          if (rawData.data && rawData.data.features && rawData.data.features.length) {
+            const features = rawData.data.features.slice(0, 10)
+            // features.forEach(f => {
+            //   console.log(f.properties)
+            // })
+            message.classList.remove("d-none");
+            if (rawData.meta.response_time > 500) {
+              message.classList = "alert alert-danger"
+            } else {
+              message.classList = "alert alert-primary"
+            }
+            message.innerText = rawData.meta.response_time
+            resultA.innerHTML = `${features.map(r => `<li style="list-style:none;margin:0.6rem 0">${r.properties.name} ${(r.properties.county) ? `(${r.properties.county}) ${r.properties.state}` : `(${r.properties.country})`}</li>`).join("")}`
+          } else {
+            resultA.innerHTML = "<li style='list-style:none;margin:0.6rem 0'>Nothing Found!</li>"
+          }
+        }, 50);
+      }
+    });
+
+    let useIndex = false;
+    const useIndexToggle = document.querySelector("#use_index");
+    useIndexToggle.addEventListener("click", (e) => {
+      useIndex = (!useIndex) ? true : false;
+      e.target.classList.toggle('btn-secondary');
+      e.target.blur()
+    });
+
+    inputs[1].addEventListener("input", async (e) => {
+      e.preventDefault();
+      results[1].classList.remove("d-none")
+      isTyping = 1;
+      clearTimeout(timeout);
+
+      const query = e.target.value;
+      if (!query.length) {
+        results[1].innerHTML = ""
+        messages[1].classList.add("d-none")
+      }
+      if (query.length > 3) {
+
+        timeout = setTimeout(async () => {
+          isTyping = 0;
+          // console.log("done typing", x++)
+          search(query)
+        }, 50);
+
+        if (isTyping) return
+
+        async function search(q) {
+          const res = await fetch(`http://localhost:5000/parcels?q=${query}&t=${(!useIndex) ? 'parcels' : 'parcel_search'}`);
+          const rawData = await res.json();
+          if (rawData.data) {
+            const data = rawData.data.slice(0, 10)
+            messages[1].classList.remove("d-none");
+
+            if (rawData.meta.response_time > 1000) {
+              messages[1].classList = "alert alert-danger"
+            } else if (rawData.meta.response_time > 500) {
+              messages[1].classList = "alert alert-secondary"
+            } else {
+              messages[1].classList = "alert alert-primary"
+            }
+
+            messages[1].innerText = rawData.meta.response_time;
+            console.log(rawData)
+            results[1].innerHTML = `${data.map(r => `<li style="list-style:none;margin:0.6rem 0">${r.address} (${r.dist_km.toFixed(4)} km)</li>`).join("")}`
+          } else {
+            results[1].innerHTML = "<li style='list-style:none;margin:0.6rem 0'>Nothing Found!</li>";
+          }
+        }
+      }
+    });
+
+    nearest.addEventListener("click", async () => {
+      loader.classList.add("loading")
+      try {
+        messages[2].classList.add("d-none");
+        results[2].innerHTML = "";
+        const res = await fetch(`http://localhost:5000/parcels/nearest`);
+        const rawData = await res.json();
+        console.log(rawData)
+        if (rawData.meta.response_time > 1000) {
+          messages[2].classList = "alert alert-danger"
+        } else if (rawData.meta.response_time > 500) {
+          messages[2].classList = "alert alert-secondary"
+        } else {
+          messages[2].classList = "alert alert-primary"
+        }
+        results[2].innerHTML = `<li>${rawData.data[0].address}</li>`;
+        messages[2].innerText = rawData.meta.response_time;
+        messages[2].classList.remove("d-none");
+        results[2].classList.remove("d-none");
+        loader.classList.remove("loading")
+      } catch (err) {
+        loader.classList.remove("loading")
+      }
+    });
+
+    within.addEventListener("click", async () => {
+      loader.classList.add("loading")
+      try {
+        messages[3].classList.add("d-none");
+        results[3].innerHTML = "";
+        const res = await fetch(`http://localhost:5000/parcels/within`);
+        const rawData = await res.json();
+        console.log(rawData)
+        if (rawData.meta.response_time > 1000) {
+          messages[3].classList = "alert alert-danger"
+        } else if (rawData.meta.response_time > 500) {
+          messages[3].classList = "alert alert-secondary"
+        } else {
+          messages[3].classList = "alert alert-primary"
+        }
+        rawData.data.forEach(r => {
+          results[3].innerHTML += `<li>${r.address}</li>`;
+        })
+        messages[3].innerText = rawData.meta.response_time;
+        messages[3].classList.remove("d-none");
+        results[3].classList.remove("d-none");
+        loader.classList.remove("loading")
+      } catch (err) {
+        loader.classList.remove("loading")
+      }
+    })
+
+    inputs.forEach(i => {
+      i.addEventListener("change", (e) => {
+        getLocation();
+        e.preventDefault();
+        const query = e.target.value;
+        console.log(query)
+        if (!query.length) {
+          results.forEach(r => {
+            r.innerHTML = ""
+          })
+          messages.forEach(m => m.classList.add("d-none"))
+        }
+      })
+    })
+
+    const clear = document.querySelectorAll("[data-reset]");
+    console.log(clear)
+    clear.forEach(b => {
+      b.addEventListener("click", () => {
+        messages.forEach(m => m.classList.add("d-none"));
+        results.forEach(m => m.classList.add("d-none"))
+      })
+
+    })
+
+  </script>
+</body>
+
+</html>

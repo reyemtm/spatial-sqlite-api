@@ -1,0 +1,24 @@
+{
+  "name": "spatial-sqlite-api",
+  "version": "0.0.1",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server",
+    "dev": "nodemon server"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "dotenv": "^15.0.0",
+    "fastify": "^3.27.0",
+    "fastify-rate-limit": "^5.7.0",
+    "fastify-swagger": "^4.7.0",
+    "spatialite": "0.1.0",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
+  }
+}
