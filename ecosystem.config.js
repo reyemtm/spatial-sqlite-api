@@ -8,7 +8,7 @@ module.exports = {
       watch: false,
       increments_var: "PORT",
       env: {
-        PORT: 5001,
+        PORT: 5000,
         NODE_ENV: "production",
       },
     },

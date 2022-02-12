@@ -8,6 +8,11 @@ const parcels = new sqlite.Database(
   sqlite.OPEN_READONLY
 );
 
+const g73_properties = new sqlite.Database(
+  "./db/g73_properties.sqlite",
+  sqlite.OPEN_READONLY
+);
+
 let spatialite_version;
 //takes  ~ 30 seconds WHERE Intersects(GEOMETRY, ST_Buffer(SetSRID(MakePoint(-117.126322,32.733018), 4326), 0.001))
 (() => {
@@ -60,7 +65,40 @@ class Point {
   }
 }
 
-const findNearest = (req, reply) => {
+const GetPropertiesByDistance = (request, reply) => {
+  
+  const { lng, lat, query } = request.query;
+  console.log(lng, lat, query)
+  const sql = `SELECT fuse,
+      ST_Distance(Transform(GEOMETRY,3857), Transform(SetSRID(MakePoint(${Number(lng)},${Number(lat)}),4326),3857)) / 1000 as dist_km
+    FROM
+        search
+    WHERE
+        search MATCH ? ORDER BY dist_km, rank
+    LIMIT 100`;
+
+  g73_properties.spatialite(function (err) {
+    if (err) return reply(err);
+    const queryValue = [query + "*"];
+    console.log(queryValue)
+    g73_properties.all(sql, queryValue, function (err, rows) {
+      if (err) throw new Error(err);
+
+      reply.send({
+        data: rows,
+        meta: {
+          api: name.split("-").join(" ").toUpperCase() + " Version " + version,
+          response_time: Number(reply.getResponseTime().toFixed(2)),
+          spatialite_version: spatialite_version,
+          date_accessed: new Date(),
+        },
+      });
+    });
+  });
+};
+
+const GetNearest = (request, reply) => {
+  
   parcels.spatialite((err) => {
     if (err) throw new Error(err);
 
@@ -92,7 +130,7 @@ const findNearest = (req, reply) => {
   });
 };
 
-const findWithin = (req, reply) => {
+const GetWithin = (request, reply) => {
   parcels.spatialite((err) => {
     if (err) throw new Error(err);
 
@@ -117,8 +155,8 @@ const findWithin = (req, reply) => {
   });
 };
 
-const searchParcels = (req, reply) => {
-  const { t, q } = req.query;
+const GetParcels = (request, reply) => {
+  const { t, q } = request.query;
   const table = !t ? "parcels" : t === "parcels" ? "parcels" : "search";
   const sql = `SELECT address,
     X(Centroid(GEOMETRY)) as _x,
@@ -154,8 +192,8 @@ const searchParcels = (req, reply) => {
   });
 };
 
-const searchByDistance = (req, reply) => {
-  const { lat, lng, q } = req.query;
+const GetByDistance = (request, reply) => {
+  const { lat, lng, q } = request.query;
   if (!lat || !lng || !Number(lat) || !Number(lng)) throw new Error();
 
   const sql = `SELECT name, state_alpha as state, county_name as county, "country code" as country,
@@ -200,8 +238,9 @@ const searchByDistance = (req, reply) => {
 };
 
 module.exports = {
-  searchByDistance,
-  searchParcels,
-  findNearest,
-  findWithin,
+  GetPropertiesByDistance,
+  GetByDistance,
+  GetParcels,
+  GetNearest,
+  GetWithin,
 };

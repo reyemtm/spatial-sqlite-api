@@ -1,9 +1,38 @@
+require("dotenv").config();
 const fastify = require("fastify")({
   logger: {
-    level: "info",
+    level: "warn",
   },
 });
-require("dotenv").config();
+
+const genKeys = (string) => {
+  if (!string) return
+  const array = (string.includes(",")) ? string.split(",") : null;
+  if (!array) return
+  const keys = [];
+  for (let i = 0; i < array.length; i++) {
+    let hasKey = false
+    keys.forEach(k => {
+      if (k.file === array[i]) {
+        k.keys.push(array[i+1])
+        hasKey = true
+      }
+    });
+    if (!hasKey) {
+      keys.push({
+        file: array[i],
+        keys: [array[i+1]]
+      })
+    }
+    i++
+  }
+  return keys
+}
+
+const options = {
+  keys: genKeys(process.env.KEYS),
+  cookieName: "_ssql"
+}
 
 fastify.register(require("fastify-rate-limit"), {
   max: 100,
@@ -19,7 +48,7 @@ fastify.register(require("fastify-rate-limit"), {
 
 // fastify.register(require("./routes/items"));
 fastify.register(require("./routes/Home"));
-fastify.register(require("./routes/Spatial"));
+fastify.register(require("./routes/SpatialRoute"), options);
 
 const PORT = process.env.PORT || 5000;
 

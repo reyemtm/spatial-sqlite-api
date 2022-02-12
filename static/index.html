@@ -153,7 +153,7 @@
       <p>Query ~ 800k parcels, sorted by distance to the San Diego Zoo.</p>
       <form class="form-inline">
         <input id="parcels" type="text" class="form-control my-10"
-          placeholder="Parcel Address (2100 Park BLVD)"></input><button type="button" class="btn" id="use_index">Use FTS
+          placeholder="Parcel Address (2100 Park BLVD)"></input><button type="button" class="btn btn-secondary" id="use_index">Use FTS
           Index</button>
       </form>
     </div>
@@ -245,7 +245,7 @@
         clearTimeout(timeout);
 
         timeout = setTimeout(async () => {
-          const res = await fetch(`http://localhost:5000/places?lat=${coords[1]}1&lng=${coords[0]}&q=` + query);
+          const res = await fetch(`http://localhost:5000/places/dist?lat=${coords[1]}1&lng=${coords[0]}&q=` + query);
           const rawData = await res.json();
           if (rawData.data && rawData.data.features && rawData.data.features.length) {
             const features = rawData.data.features.slice(0, 10)
@@ -267,7 +267,7 @@
       }
     });
 
-    let useIndex = false;
+    let useIndex = true;
     const useIndexToggle = document.querySelector("#use_index");
     useIndexToggle.addEventListener("click", (e) => {
       useIndex = (!useIndex) ? true : false;
@@ -297,7 +297,7 @@
         if (isTyping) return
 
         async function search(q) {
-          const res = await fetch(`http://localhost:5000/parcels?q=${query}&t=${(!useIndex) ? 'parcels' : 'parcel_search'}`);
+          const res = await fetch(`http://localhost:5000/parcels/parcels?q=${query}&t=${(!useIndex) ? 'parcels' : 'parcel_search'}`);
           const rawData = await res.json();
           if (rawData.data) {
             const data = rawData.data.slice(0, 10)

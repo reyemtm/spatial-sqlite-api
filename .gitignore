@@ -1,7 +1,8 @@
 #custom
 db/gnis_names.sqlite
 db/parcels_san_diego.sqlite
-db/properties.sqlite
+db/g73_properties.sqlite
+fetch.http
 # Logs
 logs
 *.log
