@@ -76,7 +76,7 @@ const GetPropertiesByDistance = (request, reply) => {
     FROM
       search
     WHERE
-      search MATCH ? ORDER BY dist_km, rank
+      search MATCH ? ORDER BY rank, dist_km
     LIMIT 10`;
 
   g73_properties.spatialite(function (err) {
