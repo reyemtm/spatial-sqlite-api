@@ -3,7 +3,7 @@ module.exports = {
     {
       name: "spatialite_cluster",
       script: "./server.js",
-      instances: 2,
+      instances: 4,
       exec_mode: "cluster",
       watch: false,
       increments_var: "PORT",
