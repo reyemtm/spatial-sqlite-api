@@ -72,10 +72,10 @@ const GetPropertiesByDistance = (request, reply) => {
   const sql = `SELECT fuse,
       ST_Distance(Transform(GEOMETRY,3857), Transform(SetSRID(MakePoint(${Number(lng)},${Number(lat)}),4326),3857)) / 1000 as dist_km
     FROM
-        search
+      search
     WHERE
-        search MATCH ? ORDER BY dist_km, rank
-    LIMIT 100`;
+      search MATCH ? ORDER BY dist_km, rank
+    LIMIT 10`;
 
   g73_properties.spatialite(function (err) {
     if (err) return reply(err);

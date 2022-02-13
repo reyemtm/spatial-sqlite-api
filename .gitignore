@@ -3,6 +3,8 @@ db/gnis_names.sqlite
 db/parcels_san_diego.sqlite
 db/g73_properties.sqlite
 fetch.http
+pm2.config.js
+
 # Logs
 logs
 *.log
