@@ -4,6 +4,10 @@ db/parcels_san_diego.sqlite
 db/g73_properties.sqlite
 fetch.http
 pm2.config.js
+.deploys
+source
+current
+shared
 
 # Logs
 logs
