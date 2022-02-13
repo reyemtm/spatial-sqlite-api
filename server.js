@@ -34,6 +34,10 @@ const options = {
   cookieName: "_ssql"
 }
 
+fastify.register(require('fastify-cors'), { 
+  // put your options here
+})
+
 fastify.register(require("fastify-rate-limit"), {
   max: 100,
   timeWindow: "1 minute",
