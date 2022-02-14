@@ -66,17 +66,19 @@ class Point {
 }
 
 const GetPropertiesByDistance = (request, reply) => {
-  
   const { lng, lat, query } = request.query;
-  console.log(lng, lat, query)
+  
+  if (!query || query.trim().length < 3) return reply.send({
+    data: []
+  });
+  //ST_Distance(Transform(GEOMETRY,3857), Transform(SetSRID(MakePoint(${Number(lng)},${Number(lat)}),4326),3857)) / 1000 as dist_km
   const sql = `SELECT fuse,
       ST_X(GEOMETRY) as lng,
-      ST_Y(GEOMETRY) as lat,
-      ST_Distance(Transform(GEOMETRY,3857), Transform(SetSRID(MakePoint(${Number(lng)},${Number(lat)}),4326),3857)) / 1000 as dist_km
+      ST_Y(GEOMETRY) as lat
     FROM
       search
     WHERE
-      search MATCH ? ORDER BY rank, dist_km
+      search = ? 
     LIMIT 10`;
 
   g73_properties.spatialite(function (err) {
